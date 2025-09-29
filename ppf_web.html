@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- 
+    ================================================================================
+    PPF REVENUE MAXIMIZATION CALCULATOR
+    ================================================================================
+    
+    This is an educational web application for economics courses that demonstrates
+    how producers maximize revenue using Production Possibility Frontier (PPF) analysis.
+    
+    WHAT THIS TOOL TEACHES:
+    - How to find the optimal production mix of two goods (corn and wheat)
+    - The relationship between market prices and production decisions
+    - How Marginal Rate of Product Substitution (MRPS) guides optimization
+    - Why revenue varies along the PPF curve
+    
+    TECHNICAL NOTES:
+    - This is a single HTML file that runs entirely in a web browser
+    - No installation or server required - just open the file
+    - Uses Plotly.js library for interactive charts (loaded from internet)
+    - All calculations happen in JavaScript in the user's browser
+    
+    FOR INSTRUCTORS:
+    - You can modify default values by changing the "value=" attributes below
+    - Economic parameters are clearly labeled in the JavaScript section
+    - The PPF uses a concave (quarter-circle) shape representing increasing costs
+    ================================================================================
+    -->
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPF Revenue Maximization Calculator</title>
+    
+    <!-- Load Plotly.js library for creating interactive charts -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        /* 
+        ========================================================================
+        VISUAL STYLING (CSS)
+        ========================================================================
+        This section controls how the application looks. You can modify colors,
+        sizes, and spacing here. Each section is clearly labeled.
+        ========================================================================
+        */
+        
+        /* Overall page appearance */
+        body {
+            font-family: Arial, sans-serif;  /* Easy-to-read font */
+            margin: 20px;                    /* Space around the page edges */
+            background-color: #f5f5f5;       /* Light gray background */
+        }
+        /* Main layout container - splits page into left and right sections */
+        .container {
+            display: flex;                   /* Side-by-side layout */
+            gap: 20px;                      /* Space between left and right panels */
+            max-width: 1200px;              /* Maximum width on large screens */
+            margin: 0 auto;                 /* Center the content */
+        }
+        
+        /* Left panel - contains input fields and results */
+        .input-panel {
+            background: white;              /* White background for contrast */
+            padding: 20px;                  /* Space inside the panel */
+            border-radius: 8px;             /* Rounded corners */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);  /* Subtle shadow */
+            width: 300px;                   /* Fixed width for consistency */
+            height: fit-content;            /* Height adjusts to content */
+        }
+        
+        /* Right panel - contains the interactive chart */
+        .chart-panel {
+            background: white;              /* White background for contrast */
+            padding: 20px;                  /* Space inside the panel */
+            border-radius: 8px;             /* Rounded corners */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);  /* Subtle shadow */
+            flex: 1;                        /* Takes remaining space */
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: inline-block;
+            width: 80px;
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="number"] {
+            width: 80px;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            margin: 0 8px;
+        }
+        input[type="number"]:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
+        .unit {
+            color: #666;
+            font-size: 14px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        button:hover {
+            background-color: #e0e0e0;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            border-left: 4px solid #4CAF50;
+        }
+        .results h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .results p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        #chart {
+            width: 100%;
+            height: 500px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 
+    ========================================================================
+    HTML STRUCTURE
+    ========================================================================
+    This section defines the layout and content of the web page.
+    The page is divided into two main sections:
+    1. Left panel: Input fields and results display
+    2. Right panel: Interactive chart
+    ========================================================================
+    -->
+    
+    <!-- Main title at the top of the page -->
+    <h1>PPF Revenue Maximization Calculator</h1>
+    
+    <!-- Container that holds both the left and right panels -->
+    <div class="container">
+        
+        <!-- LEFT PANEL: Input fields and results -->
+        <div class="input-panel">
+            <h2>Parameters</h2>
+            
+            <!-- 
+            ECONOMIC PARAMETERS - These are the values students/instructors can adjust
+            
+            DEFAULT VALUES (you can change these):
+            - Corn price: $10.0 per bushel
+            - Corn max production: 100 bushels  
+            - Wheat price: $15.0 per bushel
+            - Wheat max production: 50 bushels
+            
+            These create a scenario where wheat is more expensive, leading to mixed production.
+            -->
+            
+            <!-- Corn market price - how much money per bushel of corn -->
+            <div class="input-group">
+                <label>Corn:</label>
+                <input type="number" id="cornPrice" value="10.0" step="0.1" min="0">
+                <span class="unit">$/bushel</span>
+            </div>
+            
+            <!-- Corn production capacity - maximum bushels that can be produced -->
+            <div class="input-group">
+                <label>Corn:</label>
+                <input type="number" id="cornPPF" value="100" step="1" min="0">
+                <span class="unit">PPF in bushels</span>
+            </div>
+            
+            <!-- Wheat market price - how much money per bushel of wheat -->
+            <div class="input-group">
+                <label>Wheat:</label>
+                <input type="number" id="wheatPrice" value="15.0" step="0.1" min="0">
+                <span class="unit">$/bushel</span>
+            </div>
+            
+            <!-- Wheat production capacity - maximum bushels that can be produced -->
+            <div class="input-group">
+                <label>Wheat:</label>
+                <input type="number" id="wheatPPF" value="50" step="1" min="0">
+                <span class="unit">PPF in bushels</span>
+            </div>
+            
+            
+            
+            <div class="results" id="results">
+                <h3>Results</h3>
+                <p id="decision">Results update automatically</p>
+                <p id="optimal">Optimal point: -</p>
+                <p id="profit">Total revenue: -</p>
+                <p id="analysis">Economic analysis: -</p>
+            </div>
+        </div>
+        
+        <div class="chart-panel">
+            <div id="chart"></div>
+        </div>
+    </div>
+
+    <script>
+        // =============================================================================
+        // JAVASCRIPT CODE - THE ECONOMIC CALCULATIONS
+        // =============================================================================
+        // 
+        // This section contains all the mathematical formulas and economic logic.
+        // Even if you're not a programmer, you can understand what each part does.
+        // 
+        // KEY CONCEPTS IMPLEMENTED:
+        // 1. PPF Curve: Uses quarter-circle formula for increasing opportunity costs
+        // 2. Revenue Calculation: Price × Quantity for each point on the PPF
+        // 3. MRPS Calculation: Mathematical derivative of the PPF curve
+        // 4. Optimization: Finds the point with maximum revenue
+        // 
+        // FOR INSTRUCTORS: You can modify the economic formulas below if needed
+        // =============================================================================
+        
+        /**
+         * STEP 1: GET INPUT VALUES
+         * This function reads the numbers that users type into the input fields
+         * and converts them into a format the computer can use for calculations.
+         */
+        function getValues() {
+            return {
+                // Read the corn price from the input field (default to 0 if empty)
+                cornPrice: parseFloat(document.getElementById('cornPrice').value) || 0,
+                // Read the corn production capacity from the input field
+                cornPPF: parseFloat(document.getElementById('cornPPF').value) || 0,
+                // Read the wheat price from the input field
+                wheatPrice: parseFloat(document.getElementById('wheatPrice').value) || 0,
+                // Read the wheat production capacity from the input field
+                wheatPPF: parseFloat(document.getElementById('wheatPPF').value) || 0
+            };
+        }
+        
+        /**
+         * STEP 2: CALCULATE THE PPF CURVE
+         * This creates the curved line that shows all possible production combinations.
+         * 
+         * ECONOMIC CONCEPT: The PPF is concave (bowed outward) because of increasing
+         * opportunity costs. As you produce more of one good, you give up increasingly
+         * more of the other good.
+         * 
+         * MATHEMATICAL FORMULA: Uses a quarter-circle equation
+         * wheat = wheatMax × √(1 - (corn/cornMax)²)
+         * 
+         * This creates 100 points along the curve for smooth visualization.
+         */
+        function calculatePPF(cornMax, wheatMax) {
+            // Create empty lists to store the corn and wheat values
+            const cornValues = [];
+            const wheatValues = [];
+            
+            // Calculate 100 points along the PPF curve (from 0 corn to maximum corn)
+            for (let c = 0; c <= cornMax; c += cornMax / 100) {
+                // Add this corn value to our list
+                cornValues.push(c);
+                
+                // ECONOMIC FORMULA: Calculate corresponding wheat production
+                // This is the quarter-circle equation that creates the concave PPF
+                const ratio = c / cornMax;  // What fraction of max corn are we producing?
+                const w = wheatMax * Math.sqrt(Math.max(0, 1 - ratio * ratio));
+                wheatValues.push(w);
+            }
+            
+            // Return both lists so other functions can use them
+            return { cornValues, wheatValues };
+        }
+        
+        /**
+         * STEP 3: CALCULATE MRPS (Marginal Rate of Product Substitution)
+         * 
+         * ECONOMIC CONCEPT: MRPS tells us how much wheat production decreases
+         * when we increase corn production by one unit. This is the slope of 
+         * the PPF curve at any given point.
+         * 
+         * WHY IT MATTERS: At the optimal production point, MRPS equals the 
+         * price ratio (corn price ÷ wheat price). This is the key condition
+         * for revenue maximization.
+         * 
+         * MATHEMATICAL FORMULA: This is the derivative of the PPF equation
+         * MRPS = (corn/cornMax) ÷ √(1 - (corn/cornMax)²) × (wheatMax/cornMax)
+         */
+        function calculateMRT(cornMax, wheatMax, corn) {
+            // Calculate what fraction of maximum corn we're producing
+            const ratio = corn / cornMax;
+            
+            // If we're at maximum corn, MRPS is infinite (can't trade any more wheat)
+            if (ratio >= 1) return Infinity;
+            
+            // Apply the mathematical formula for MRPS on a concave PPF
+            return (ratio / Math.sqrt(1 - ratio * ratio)) * (wheatMax / cornMax);
+        }
+        
+        function calculateOptimal(cornPrice, cornMax, wheatPrice, wheatMax) {
+            const priceRatio = cornPrice / wheatPrice;
+            
+            // Concave PPF - find tangency point
+            // For concave PPF, we need to find where MRT = price ratio
+            // This requires numerical solution
+            let bestC = 0, bestW = wheatMax, bestProfit = wheatPrice * wheatMax;
+            
+            // Check corner solutions first
+            const profitAllCorn = cornPrice * cornMax;
+            const profitAllWheat = wheatPrice * wheatMax;
+            
+            if (profitAllCorn > bestProfit) {
+                bestC = cornMax;
+                bestW = 0;
+                bestProfit = profitAllCorn;
+            }
+            
+            // Check interior solutions by sampling along the curve
+            for (let c = 0; c <= cornMax; c += cornMax / 1000) {
+                const ratio = c / cornMax;
+                const w = wheatMax * Math.sqrt(Math.max(0, 1 - ratio * ratio));
+                const profit = cornPrice * c + wheatPrice * w;
+                
+                if (profit > bestProfit) {
+                    bestC = c;
+                    bestW = w;
+                    bestProfit = profit;
+                }
+            }
+            
+            const cOpt = bestC;
+            const wOpt = bestW;
+            const mrt = calculateMRT(cornMax, wheatMax, cOpt);
+            
+            let decision;
+            if (cOpt === 0) {
+                decision = "Specialize in Wheat Production";
+            } else if (cOpt === cornMax) {
+                decision = "Specialize in Corn Production";
+            } else {
+                decision = "Mixed Production (Interior Solution)";
+            }
+            
+            const profit = cornPrice * cOpt + wheatPrice * wOpt;
+            
+            return { cOpt, wOpt, profit, decision, mrt, priceRatio };
+        }
+        
+        function calculate() {
+            const values = getValues();
+            
+            if (values.cornPrice <= 0 || values.cornPPF <= 0 || 
+                values.wheatPrice <= 0 || values.wheatPPF <= 0) {
+                alert('All values must be positive numbers');
+                return;
+            }
+            
+            const result = calculateOptimal(values.cornPrice, values.cornPPF, 
+                                          values.wheatPrice, values.wheatPPF);
+            
+            // Update results
+            document.getElementById('decision').textContent = result.decision;
+            document.getElementById('optimal').textContent = 
+                `Optimal point: (${result.cOpt.toFixed(1)}, ${result.wOpt.toFixed(1)})`;
+            document.getElementById('profit').textContent = 
+                `Total revenue: $${result.profit.toFixed(2)}`;
+            
+            document.getElementById('analysis').textContent = 
+                `MRPS at optimal: ${result.mrt.toFixed(3)}, Price Ratio: ${result.priceRatio.toFixed(3)}`;
+            
+            // Create PPF line using the new function
+            const ppfData = calculatePPF(values.cornPPF, values.wheatPPF);
+            const cornValues = ppfData.cornValues;
+            const wheatValues = ppfData.wheatValues;
+            
+            // Calculate revenue for each point on the PPF
+            const revenueValues = cornValues.map((corn, index) => {
+                const wheat = wheatValues[index];
+                return values.cornPrice * corn + values.wheatPrice * wheat;
+            });
+            
+            // Create isorevenue line
+            const isoprofitCorn = [];
+            const isoprofitWheat = [];
+            for (let c = 0; c <= values.cornPPF * 1.2; c += values.cornPPF / 50) {
+                isoprofitCorn.push(c);
+                const w = (result.profit / values.wheatPrice) - (values.cornPrice / values.wheatPrice) * c;
+                isoprofitWheat.push(w);
+            }
+            
+            // Plot
+            const data = [
+                {
+                    x: cornValues,
+                    y: wheatValues,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'PPF',
+                    line: { color: 'green', width: 3 },
+                    customdata: revenueValues,
+                    hovertemplate: '<b>PPF Point</b><br>' +
+                                   'Corn: %{x:.1f} bushels<br>' +
+                                   'Wheat: %{y:.1f} bushels<br>' +
+                                   'Revenue: $%{customdata:.2f}<br>' +
+                                   '<extra></extra>'
+                },
+                {
+                    x: isoprofitCorn,
+                    y: isoprofitWheat,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Isorevenue Line',
+                    line: { color: 'blue', width: 2, dash: 'dash' },
+                    hoverinfo: 'skip'
+                },
+                {
+                    x: [result.cOpt],
+                    y: [result.wOpt],
+                    type: 'scatter',
+                    mode: 'markers',
+                    name: `Optimal (${result.cOpt.toFixed(1)}, ${result.wOpt.toFixed(1)})`,
+                    marker: { color: 'red', size: 12 },
+                    hovertemplate: '<b>Optimal Point</b><br>' +
+                                   'Corn: %{x:.1f} bushels<br>' +
+                                   'Wheat: %{y:.1f} bushels<br>' +
+                                   'Total Revenue: $' + result.profit.toFixed(2) + '<br>' +
+                                   'MRPS: ' + result.mrt.toFixed(3) + '<br>' +
+                                   '<extra></extra>'
+                }
+            ];
+            
+            const layout = {
+                title: `Revenue-Maximizing Point - Using PPF and MRPS`,
+                xaxis: { 
+                    title: 'Corn (bushels)', 
+                    range: [0, values.cornPPF * 1.1],
+                    showspikes: true,
+                    spikecolor: 'black',
+                    spikethickness: 2
+                },
+                yaxis: { 
+                    title: 'Wheat (bushels)', 
+                    range: [0, values.wheatPPF * 1.1],
+                    showspikes: true,
+                    spikecolor: 'black',
+                    spikethickness: 2
+                },
+                showlegend: true,
+                hovermode: 'closest'
+            };
+            
+            Plotly.newPlot('chart', data, layout);
+        }
+        
+        
+        // Add event listeners for auto-calculation
+        function setupAutoCalculation() {
+            const inputs = ['cornPrice', 'cornPPF', 'wheatPrice', 'wheatPPF'];
+            
+            inputs.forEach(inputId => {
+                const element = document.getElementById(inputId);
+                // Listen for various input events
+                element.addEventListener('input', calculate);
+                element.addEventListener('change', calculate);
+                element.addEventListener('keyup', calculate);
+            });
+        }
+        
+        // Initial setup and calculation
+        window.onload = function() {
+            setupAutoCalculation();
+            calculate();
+        };
+    </script>
+</body>
+</html>
